@@ -37,7 +37,8 @@
 //! SQUARE_A4: 434.3891 Hz, 0.80022585 Vl
 //! ```
 
-type SampleType = f64;
+// type SampleType = f64;
+type SampleType = f32;
 
 // BCF constants:
 const SPS: u32 = 48_000; // Sample Hz
