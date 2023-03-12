@@ -1,3 +1,6 @@
+This is a fork of https://gitlab.com/plopgrizzly/audio/pitch with the aim of making it realtime safe.
+
+
 ## ["pitch"](http://plopgrizzly.com/audio#plopgrizzly) by [Plop Grizzly](http://plopgrizzly.com)
 Quickly and accurately determine the pitch and volume of a sound sample.
 

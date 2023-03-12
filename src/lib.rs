@@ -64,13 +64,13 @@ impl ZeroCross {
 	}
 }
 
-struct BitStream {
+pub struct BitStream {
 	bits: Vec<usize>,
 	len: usize,
 }
 
 impl BitStream {
-	fn new(samples: &[SampleType], threshold: SampleType) -> Self {
+	pub fn new(samples: &[SampleType], threshold: SampleType) -> Self {
 		let mut zc = ZeroCross::new();
 		let mut bin = BitStream {
 			bits: Vec::with_capacity(samples.len() / NBITS),
@@ -96,6 +96,34 @@ impl BitStream {
 		}
 
 		bin
+	}
+
+	fn set(&mut self, samples: &[SampleType], threshold: SampleType) -> &mut Self {
+		let mut zc = ZeroCross::new();
+		self.bits.clear();
+		self.len = samples.len();
+
+		let mut i = 0;
+		'a: loop {
+			let mut register = 0usize;
+			for shift in 0..NBITS {
+				let setv = zc.get(samples[i], threshold);
+				if setv {
+					register ^= (::std::usize::MAX
+								 ^ register) & (1 << shift);
+				}
+				i += 1;
+				if i == samples.len() {
+					// self.bits.drain(0..1);
+					self.bits.push(register);
+					break 'a;
+				}
+			}
+			self.bits.push(register);
+		}
+
+
+		self
 	}
 
 	fn get(&self, index: usize, shift: usize) -> usize {
@@ -141,7 +169,7 @@ impl BitStream {
 	}
 }
 
-fn bcf(samples: &[SampleType]) -> Option<(SampleType, SampleType)> {
+fn bcf(samples: &[SampleType], mut bin: &mut BitStream) -> Option<(SampleType, SampleType)> {
 	// Get The Amplitude (Volume).
 	let mut volume: SampleType = 0.0;
 	for i in samples.iter() {
@@ -149,7 +177,7 @@ fn bcf(samples: &[SampleType]) -> Option<(SampleType, SampleType)> {
 	}
 
 	// Convert Into a Bitstream of Zero-Crossings
-	let bin = BitStream::new(samples, volume * 0.00001);
+	bin = BitStream::set(bin, samples, volume * 0.00001);
 
 	// Binary Autocorrelation
 	let est_index = bin.autocorrelate();
@@ -196,6 +224,6 @@ fn bcf(samples: &[SampleType]) -> Option<(SampleType, SampleType)> {
 }
 
 /// Do the BCF calculation on raw samples.  Returns `(hz, amplitude[0-1])`.
-pub fn detect(samples: &[SampleType]) -> (SampleType, SampleType) {
-	bcf(samples).unwrap_or((0.0, 0.0))
+pub fn detect(samples: &[SampleType], bin:&mut BitStream) -> (SampleType, SampleType) {
+	bcf(samples,bin).unwrap_or((0.0, 0.0))
 }
